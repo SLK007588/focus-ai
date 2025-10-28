@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Blocked - Focus AI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    
+    .container {
+      text-align: center;
+      max-width: 600px;
+      padding: 40px;
+    }
+    
+    .icon {
+      font-size: 120px;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+    
+    p {
+      font-size: 20px;
+      margin-bottom: 15px;
+      opacity: 0.9;
+    }
+    
+    .blocked-url {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 15px 25px;
+      border-radius: 30px;
+      display: inline-block;
+      margin: 30px 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .timer {
+      font-size: 72px;
+      font-weight: 700;
+      margin: 30px 0;
+      font-variant-numeric: tabular-nums;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .message {
+      font-size: 16px;
+      opacity: 0.7;
+      margin-bottom: 30px;
+    }
+    
+    .motivational {
+      font-size: 18px;
+      font-style: italic;
+      margin-top: 30px;
+      opacity: 0.8;
+      transition: opacity 0.5s ease;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🎯</div>
+    <h1>Stay Focused!</h1>
+    <p>This site is blocked to help you stay productive</p>
+    
+    <div class="blocked-url" id="blockedUrl">Loading...</div>
+    
+    <div class="timer" id="timer">00:00</div>
+    <div class="message">Time saved by staying focused</div>
+    
+    <div class="motivational" id="quoteText">
+      "The key is not to prioritize what's on your schedule, but to schedule your priorities."
+    </div>
+  </div>
+  
+  <script src="blocked.js"></script>
+</body>
+</html>

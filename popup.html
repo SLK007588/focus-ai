@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      text-align: center;
+      width: 400px;
+      max-height: 600px;
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-attachment: fixed;
+      color: white;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    /* Fix scrolling background issue */
+    body::-webkit-scrollbar {
+      width: 0px;
+    }
+    
+    body::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+    
+    /* Ensure content area maintains gradient */
+    .content {
+      padding: 0 20px 20px;
+      background: transparent;
+      position: relative;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      text-align: center;
+    }
+    
+    .header p {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 5px;
+      margin: 0 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .content {
+      padding: 0 20px 20px;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .toggle-section {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .toggle-label {
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+    
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.3);
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+    
+    .stats {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .stats h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .site-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 13px;
+    }
+    
+    .site-item:last-child {
+      border-bottom: none;
+    }
+    
+    .site-name {
+      font-weight: 500;
+      opacity: 0.9;
+    }
+    
+    .site-visits {
+      opacity: 0.7;
+    }
+    
+    .blocked-sites {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+    }
+    
+    .blocked-sites h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .blocked-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .blocked-tag {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+    }
+    
+    .add-site {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+    }
+    
+    .add-site input {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    
+    .add-site button, .test-btn, .music-btn {
+      padding: 8px 15px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    
+    .add-site button:hover, .test-btn:hover, .music-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+    
+    .empty-state {
+      text-align: center;
+      opacity: 0.6;
+      font-size: 12px;
+      padding: 10px 0;
+    }
+    
+    .music-player {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .music-player h3 {
+      font-size: 14px;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    
+    .now-playing {
+      text-align: center;
+      margin-bottom: 15px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+    
+    .album-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+    
+    .album-icon.playing {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .track-info {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .music-controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 15px 0;
+    }
+    
+    .music-btn-small {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    
+    .music-btn-small:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+    
+    .music-btn-small.play {
+      width: 50px;
+      height: 50px;
+      background: white;
+      color: #667eea;
+      font-size: 20px;
+    }
+    
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    
+    .volume-icon {
+      font-size: 16px;
+    }
+    
+    .volume-slider {
+      -webkit-appearance: none;
+      flex: 1;
+      height: 4px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.3);
+      outline: none;
+      
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+    }
+    
+    .file-upload {
+      margin-top: 15px;
+      text-align: center;
+    }
+    
+    .file-label {
+      display: inline-block;
+      padding: 10px 20px;
+      background: white;
+      color: #667eea;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .file-label:hover {
+      transform: scale(1.05);
+    }
+    
+    #musicFileInput {
+      display: none;
+    }
+    
+    .playlist-mini {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    
+    .track-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      transition: all 0.3s;
+    }
+    
+    .track-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .track-item.active {
+      background: rgba(76, 175, 80, 0.4);
+      border-left: 3px solid white;
+    }
+    
+    .track-icon {
+      font-size: 16px;
+    }
+    
+    .track-name {
+      flex: 1;
+      font-weight: 500;
+    }
+    
+    .track-delete {
+      background: rgba(244, 67, 54, 0.6);
+      border: none;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    
+    .reminder-settings {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .reminder-settings h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .interval-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .interval-control label {
+      font-size: 13px;
+    }
+    
+    .interval-control select {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      font-size: 12px;
+      background: white;
+      color: #667eea;
+    }
+    
+    .test-btn {
+      margin-top: 10px;
+      width: 100%;
+    }
+    
+    .ai-features {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .ai-features h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .feature-list {
+      font-size: 12px;
+      opacity: 0.9;
+      line-height: 1.8;
+    }
+    
+    .feature-list div {
+      padding: 5px 0;
+    }
+    
+    .status-msg {
+      font-size: 11px;
+      text-align: center;
+      margin-top: 10px;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+    }
+    
+    /* Prevent white background at bottom */
+    html {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100%;
+    }
+    
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+     <h1></h1>
+    <h1>🎯 Focus AI</h1>
+    <p>AI-powered focus & productivity</p>
+    <br>
+  </div>
+  
+  <div class="tabs">
+    <div class="tab active" data-tab="focus">🚫 Focus</div>
+    <div class="tab" data-tab="music">🎵 Music</div>
+    <div class="tab" data-tab="ai">🤖 AI Care</div>
+  </div>
+  
+  <div class="content">
+    <!-- Focus Tab -->
+    <div class="tab-content active" id="focus">
+      <div class="toggle-section">
+        <span class="toggle-label">Block Distractions</span>
+        <label class="toggle">
+          <input type="checkbox" id="blockToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="stats">
+        <h3>📊 Today's Activity</h3>
+        <div id="statsContent">
+          <div class="empty-state">No activity tracked yet</div>
+        </div>
+      </div>
+      
+      <div class="blocked-sites">
+        <h3>🚫 Blocked Sites</h3>
+        <div class="blocked-list" id="blockedList"></div>
+        <div class="add-site">
+          <input type="text" id="newSite" placeholder="example.com">
+          <button id="addButton">Add</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Music Tab -->
+    <div class="tab-content" id="music">
+      <div class="music-player">
+        <h3>🎵 Music Player</h3>
+        
+        <div class="now-playing">
+          <div class="album-icon" id="albumIcon">🎵</div>
+          <div class="track-info" id="currentTrackName">No track loaded</div>
+        </div>
+        
+        <div class="music-controls">
+          <button class="music-btn-small" id="prevTrack">⏮️</button>
+          <button class="music-btn-small play" id="playPause">▶️</button>
+          <button class="music-btn-small" id="nextTrack">⏭️</button>
+        </div>
+        
+        <div class="volume-control">
+          <span class="volume-icon" id="volIcon">🔊</span>
+          <input type="range" class="volume-slider" id="volume" min="0" max="100" value="70">
+        </div>
+        
+        <div class="file-upload">
+          <label for="musicFileInput" class="file-label">
+            📁 Add Music Files
+          </label>
+          <input type="file" id="musicFileInput" accept="audio/*" multiple>
+          <div class="status-msg" id="musicStatus">Upload MP3/WAV files to play</div>
+        </div>
+        
+       <div id="playlistMini" class="playlist-mini">
+  <div class="empty-state">Loading tracks...</div>
+</div>
+
+
+
+
+          
+        </div>
+      </div>
+    </div>
+    
+    <!-- AI Care Tab -->
+    <div class="tab-content" id="ai">
+      <div class="toggle-section">
+        <span class="toggle-label">AI Reminders</span>
+        <label class="toggle">
+          <input type="checkbox" id="reminderToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="reminder-settings">
+        <h3>⏰ Reminder Interval</h3>
+        <div class="interval-control">
+          <label>Remind me every:</label>
+          <select id="reminderInterval">
+            <option value="15">15 minutes</option>
+            <option value="30" selected>30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="90">1.5 hours</option>
+          </select>
+        </div>
+        <button class="test-btn" id="testReminder">Test Reminder Now</button>
+      </div>
+      
+      <div class="ai-features">
+        <h3>🤖 AI Will Remind You To:</h3>
+        <div class="feature-list">
+          <div>💧 Drink water & stay hydrated</div>
+          <div>🧘 Check your posture</div>
+          <div>👀 Rest your eyes (20-20-20 rule)</div>
+          <div>🤸 Stretch and move around</div>
+          <div>☕ Take regular breaks</div>
+          <div>⚡ Stay motivated & focused</div>
+        </div>
+      </div>
+      
+      <div class="stats">
+        <h3>💡 Pro Tip</h3>
+        <div style="font-size: 12px; line-height: 1.6; opacity: 0.9;">
+          Regular breaks and healthy habits boost productivity by up to 40%. Let Focus AI help you maintain a sustainable work rhythm!
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <audio id="audioPlayer"></audio>
+  
+  <script src="popup.js"></script>
+ 
+
+</body>
+</html>
