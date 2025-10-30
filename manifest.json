@@ -8,8 +8,7 @@
     "tabs",
     "webNavigation",
     "alarms",
-    "notifications",
-    "offscreen"
+    "notifications"
   ],
   "host_permissions": [
     "<all_urls>"

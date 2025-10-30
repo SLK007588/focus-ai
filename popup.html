@@ -521,7 +521,6 @@
 </head>
 <body>
   <div class="header">
-     <h1></h1>
     <h1>🎯 Focus AI</h1>
     <p>AI-powered focus & productivity</p>
     <br>
@@ -625,6 +624,21 @@
           </select>
         </div>
         <button class="test-btn" id="testReminder">Test Reminder Now</button>
+
+        <!-- New: quick-add reminder inputs (required by popup.js) -->
+        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+          <input id="reminderInput" type="text" placeholder="Reminder text" style="flex:1;padding:8px;border-radius:6px;border:none;font-size:13px;">
+          <input id="reminderTime" type="datetime-local" style="padding:8px;border-radius:6px;border:none;font-size:13px;">
+          <button id="addReminderBtn" class="test-btn" style="padding:8px 10px; white-space:nowrap;">Add</button>
+        </div>
+      </div>
+
+      <!-- New: list of scheduled reminders (popup.js reads/removes items here) -->
+      <div style="margin-top:10px;">
+        <h3 style="margin-bottom:8px;">📌 Scheduled Reminders</h3>
+        <div id="reminderList" class="blocked-list" style="min-height:40px;">
+          <div class="empty-state">No reminders set.</div>
+        </div>
       </div>
       
       <div class="ai-features">
@@ -650,7 +664,7 @@
   
   <audio id="audioPlayer"></audio>
   
-  <script src="popup.js"></script>
+  <script type="module" src="popup.js"></script>
  
 
 </body>

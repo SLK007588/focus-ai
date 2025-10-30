@@ -4,7 +4,6 @@ let blockedSites = [];
 let isBlocking = false;
 let trackingData = {};
 let aiRemindersEnabled = true;
-let offscreenReady = false;
 
 // AI Reminder messages
 const aiReminders = {
@@ -74,11 +73,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Also re-initialize on browser startup
-chrome.runtime.onStartup.addListener(() => {
-  setupReminders();
-});
-
 // Load settings on startup
 chrome.storage.sync.get(['blockedSites', 'isBlocking', 'aiRemindersEnabled'], (data) => {
   blockedSites = data.blockedSites || [];
@@ -132,12 +126,16 @@ function setupReminders() {
   });
 }
 
-// Handle alarm triggers
+// Handle alarm triggers (single consolidated handler)
 chrome.alarms.onAlarm.addListener((alarm) => {
   console.log('Alarm triggered:', alarm.name);
-  
+
   if (alarm.name === 'aiReminder') {
     sendAIReminder();
+  }
+
+  if (alarm.name === 'cleanupTracking') {
+    cleanupTrackingData();
   }
 });
 
@@ -162,8 +160,7 @@ function sendAIReminder() {
     console.log('Creating notification with message:', message);
     
     // Create notification with higher priority and require interaction
-    const messageId = 'focusai-reminder-' + Date.now();
-    chrome.notifications.create(messageId, {
+    chrome.notifications.create('focusai-reminder-' + Date.now(), {
       type: 'basic',
       iconUrl: 'icons/icon128.png',
       title: 'Focus AI Reminder',
@@ -176,20 +173,24 @@ function sendAIReminder() {
         console.error('Notification error:', chrome.runtime.lastError);
       } else {
         console.log('Notification created successfully:', notificationId);
-        try { chrome.runtime.sendMessage({ action: 'aiReminderFired', id: messageId, message }); } catch (_) {}
       }
     });
   });
 }
 
-// Check if URL is blocked
+// Improved URL blocking check
 function isUrlBlocked(url) {
   if (!isBlocking) return false;
   
   try {
     const urlObj = new URL(url);
-    return blockedSites.some(site => urlObj.hostname.includes(site));
+    const hostname = urlObj.hostname.toLowerCase();
+    return blockedSites.some(site => 
+      hostname === site || 
+      hostname.endsWith('.' + site)
+    );
   } catch (e) {
+    console.error('Invalid URL:', e);
     return false;
   }
 }
@@ -220,29 +221,84 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-function trackTimeOnSite(url) {
+// Add cleanup for tracking data (keep only last 30 days)
+function cleanupTrackingData() {
+  chrome.storage.local.get(['trackingData'], (data) => {
+    const tracking = data.trackingData || {};
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const cleanedTracking = Object.entries(tracking)
+      .filter(([date]) => new Date(date) >= thirtyDaysAgo)
+      .reduce((acc, [date, d]) => ({ ...acc, [date]: d }), {});
+
+    chrome.storage.local.set({ trackingData: cleanedTracking }, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Error saving cleaned tracking data:', chrome.runtime.lastError);
+      }
+    });
+  });
+}
+
+// Run cleanup daily
+chrome.alarms.create('cleanupTracking', {
+  periodInMinutes: 24 * 60
+});
+
+// Improved settings validation
+chrome.storage.sync.get(['blockedSites', 'isBlocking', 'aiRemindersEnabled', 'reminderInterval'], (data) => {
   try {
-    const urlObj = new URL(url);
-    const domain = urlObj.hostname;
-    const today = new Date().toDateString();
+    blockedSites = Array.isArray(data.blockedSites) ? data.blockedSites : [];
+    isBlocking = Boolean(data.isBlocking);
+    aiRemindersEnabled = data.aiRemindersEnabled !== false;
+    const reminderInterval = parseInt(data.reminderInterval) || 30;
     
-    chrome.storage.local.get(['trackingData'], (data) => {
-      const tracking = data.trackingData || {};
-      
-      if (!tracking[today]) {
-        tracking[today] = {};
-      }
-      
-      if (!tracking[today][domain]) {
-        tracking[today][domain] = { visits: 0, timeSpent: 0 };
-      }
-      
-      tracking[today][domain].visits++;
-      
-      chrome.storage.local.set({ trackingData: tracking });
+    chrome.storage.sync.set({ 
+      blockedSites, 
+      isBlocking, 
+      aiRemindersEnabled,
+      reminderInterval: Math.max(1, Math.min(reminderInterval, 120)) // Limit between 1-120 minutes
     });
   } catch (e) {
-    // Invalid URL
+    console.error('Error loading settings:', e);
+    // Reset to defaults if error
+    chrome.storage.sync.set({
+      blockedSites: [],
+      isBlocking: false,
+      aiRemindersEnabled: true,
+      reminderInterval: 30
+    });
+  }
+});
+
+// Improved tracking with error handling
+function trackTimeOnSite(url) {
+  if (!url) return;
+
+  try {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.toLowerCase();
+    const today = new Date().toDateString();
+
+    chrome.storage.local.get(['trackingData'], (data) => {
+      try {
+        const tracking = data.trackingData || {};
+        if (!tracking[today]) tracking[today] = {};
+        if (!tracking[today][domain]) tracking[today][domain] = { visits: 0, timeSpent: 0 };
+
+        tracking[today][domain].visits++;
+
+        chrome.storage.local.set({ trackingData: tracking }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('Error saving tracking data:', chrome.runtime.lastError);
+          }
+        });
+      } catch (e) {
+        console.error('Error processing tracking data:', e);
+      }
+    });
+  } catch (e) {
+    console.error('Invalid URL in tracking:', e);
   }
 }
 
@@ -286,68 +342,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ success: true });
     return true;
   }
-
-  // Proxy audio control to offscreen document
-  if (typeof request.action === 'string' && request.action.startsWith('audio:')) {
-    ensureOffscreenDocument().then(() => waitForOffscreenReady()).then(() => {
-      chrome.runtime.sendMessage({ ...request, __origin: 'background' }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.warn('Offscreen response error:', chrome.runtime.lastError);
-          sendResponse({ ok: false, error: chrome.runtime.lastError.message });
-        } else {
-          sendResponse(response || { ok: true });
-        }
-      });
-    }).catch((e) => {
-      console.error('ensureOffscreenDocument failed', e);
-      sendResponse({ ok: false, error: String(e && e.message || e) });
-    });
-    return true; // async
-  }
-
-  if (request.action === 'offscreen:ready') {
-    offscreenReady = true;
-    sendResponse && sendResponse({ ok: true });
-    return true;
-  }
 });
-
-async function ensureOffscreenDocument() {
-  const has = await chrome.offscreen.hasDocument?.();
-  if (has) return;
-  try {
-    await chrome.offscreen.createDocument({
-      url: 'offscreen.html',
-      reasons: ['AUDIO_PLAYBACK'],
-      justification: 'Play music in background when popup is closed.'
-    });
-    offscreenReady = false;
-  } catch (e) {
-    console.error('create offscreen failed', e);
-    throw e;
-  }
-}
-
-function waitForOffscreenReady(timeoutMs = 2000) {
-  if (offscreenReady) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const tick = () => {
-      if (offscreenReady) return resolve();
-      if (Date.now() - start > timeoutMs) return reject(new Error('Offscreen not ready'));
-      try {
-        chrome.runtime.sendMessage({ action: 'offscreen:ping' }, (resp) => {
-          if (resp && resp.ok) {
-            offscreenReady = true;
-            resolve();
-          } else {
-            setTimeout(tick, 100);
-          }
-        });
-      } catch (_) {
-        setTimeout(tick, 100);
-      }
-    };
-    setTimeout(tick, 50);
-  });
-}
