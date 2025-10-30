@@ -36,16 +36,12 @@
       border-radius: 4px;
     }
     
-    /* Ensure content area maintains gradient */
-    .content {
-      padding: 0 20px 20px;
-      background: transparent;
-      position: relative;
+    /* Header styles */
+    .header {
       padding: 20px;
       text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    
     }
+    
     .header h1 {
       font-size: 24px;
       font-weight: 700;
@@ -88,6 +84,7 @@
     
     .content {
       padding: 0 20px 20px;
+      text-align: left;
     }
     
     .tab-content {
@@ -501,6 +498,46 @@
       border-radius: 5px;
     }
     
+    /* Reminder item styles */
+    .reminder-item {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .reminder-item strong {
+      font-size: 13px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .reminder-item small {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    
+    .delete-reminder {
+      background: rgba(244, 67, 54, 0.7);
+      border: none;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .delete-reminder:hover {
+      background: rgba(244, 67, 54, 0.9);
+      transform: scale(1.05);
+    }
+    
     /* Prevent white background at bottom */
     html {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -564,40 +601,26 @@
     <div class="tab-content" id="music">
       <div class="music-player">
         <h3>🎵 Music Player</h3>
-        
         <div class="now-playing">
           <div class="album-icon" id="albumIcon">🎵</div>
           <div class="track-info" id="currentTrackName">No track loaded</div>
         </div>
-        
-        <div class="music-controls">
-          <button class="music-btn-small" id="prevTrack">⏮️</button>
-          <button class="music-btn-small play" id="playPause">▶️</button>
-          <button class="music-btn-small" id="nextTrack">⏭️</button>
+        <div class="music-controls" style="margin-bottom: 18px;">
+          <button class="music-btn-small" id="prevTrack" style="font-size:20px;">⏮️</button>
+          <button class="music-btn-small play" id="playPause" style="font-size:22px;background:white;color:#764ba2;box-shadow:0 2px 5px rgba(0,0,0,0.03);">▶️</button>
+          <button class="music-btn-small" id="nextTrack" style="font-size:20px;">⏭️</button>
         </div>
-        
-        <div class="volume-control">
+        <div class="volume-control" style="margin-bottom: 14px;">
           <span class="volume-icon" id="volIcon">🔊</span>
-          <input type="range" class="volume-slider" id="volume" min="0" max="100" value="70">
+          <input type="range" class="volume-slider" id="volume" min="0" max="100" value="70" style="flex:1;">
         </div>
-        
-        <div class="file-upload">
-          <label for="musicFileInput" class="file-label">
-            📁 Add Music Files
-          </label>
+        <div class="file-upload" style="margin-bottom:16px;">
+          <label for="musicFileInput" class="file-label">📁 Add Music Files</label>
           <input type="file" id="musicFileInput" accept="audio/*" multiple>
           <div class="status-msg" id="musicStatus">Upload MP3/WAV files to play</div>
         </div>
-        
-       <div id="playlistMini" class="playlist-mini">
-  <div class="empty-state">Loading tracks...</div>
-</div>
-
-
-
-
-          
-        </div>
+        <div id="playlistMini" class="playlist-mini"></div>
+        <div style="font-size:12px;opacity:0.7;margin-top:5px;">Tracks: <span id="trackCount">0</span></div>
       </div>
     </div>
     
