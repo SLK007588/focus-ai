@@ -4,6 +4,7 @@ let blockedSites = [];
 let isBlocking = false;
 let trackingData = {};
 let aiRemindersEnabled = true;
+let offscreenReady = false;
 
 // AI Reminder messages
 const aiReminders = {
@@ -71,6 +72,11 @@ chrome.runtime.onInstalled.addListener(() => {
       setupReminders();
     });
   });
+});
+
+// Also re-initialize on browser startup
+chrome.runtime.onStartup.addListener(() => {
+  setupReminders();
 });
 
 // Load settings on startup
@@ -156,7 +162,8 @@ function sendAIReminder() {
     console.log('Creating notification with message:', message);
     
     // Create notification with higher priority and require interaction
-    chrome.notifications.create('focusai-reminder-' + Date.now(), {
+    const messageId = 'focusai-reminder-' + Date.now();
+    chrome.notifications.create(messageId, {
       type: 'basic',
       iconUrl: 'icons/icon128.png',
       title: 'Focus AI Reminder',
@@ -169,6 +176,7 @@ function sendAIReminder() {
         console.error('Notification error:', chrome.runtime.lastError);
       } else {
         console.log('Notification created successfully:', notificationId);
+        try { chrome.runtime.sendMessage({ action: 'aiReminderFired', id: messageId, message }); } catch (_) {}
       }
     });
   });
@@ -278,4 +286,68 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ success: true });
     return true;
   }
+
+  // Proxy audio control to offscreen document
+  if (typeof request.action === 'string' && request.action.startsWith('audio:')) {
+    ensureOffscreenDocument().then(() => waitForOffscreenReady()).then(() => {
+      chrome.runtime.sendMessage({ ...request, __origin: 'background' }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn('Offscreen response error:', chrome.runtime.lastError);
+          sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+        } else {
+          sendResponse(response || { ok: true });
+        }
+      });
+    }).catch((e) => {
+      console.error('ensureOffscreenDocument failed', e);
+      sendResponse({ ok: false, error: String(e && e.message || e) });
+    });
+    return true; // async
+  }
+
+  if (request.action === 'offscreen:ready') {
+    offscreenReady = true;
+    sendResponse && sendResponse({ ok: true });
+    return true;
+  }
 });
+
+async function ensureOffscreenDocument() {
+  const has = await chrome.offscreen.hasDocument?.();
+  if (has) return;
+  try {
+    await chrome.offscreen.createDocument({
+      url: 'offscreen.html',
+      reasons: ['AUDIO_PLAYBACK'],
+      justification: 'Play music in background when popup is closed.'
+    });
+    offscreenReady = false;
+  } catch (e) {
+    console.error('create offscreen failed', e);
+    throw e;
+  }
+}
+
+function waitForOffscreenReady(timeoutMs = 2000) {
+  if (offscreenReady) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const tick = () => {
+      if (offscreenReady) return resolve();
+      if (Date.now() - start > timeoutMs) return reject(new Error('Offscreen not ready'));
+      try {
+        chrome.runtime.sendMessage({ action: 'offscreen:ping' }, (resp) => {
+          if (resp && resp.ok) {
+            offscreenReady = true;
+            resolve();
+          } else {
+            setTimeout(tick, 100);
+          }
+        });
+      } catch (_) {
+        setTimeout(tick, 100);
+      }
+    };
+    setTimeout(tick, 50);
+  });
+}

@@ -4,155 +4,262 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Focus AI popup loaded successfully.");
-  loadReminders();
-  renderPlaylist();
-  if (audioPlayer) audioPlayer.volume = 0.7;
+  setupTabs();
+  initFocusControls();
+  initAIControls();
+  initMusicPlayer();
 });
 
 // ============================
 // ⏰ Reminder System
 // ============================
 
-const reminderList = document.getElementById("reminderList");
-const reminderInput = document.getElementById("reminderInput");
-const reminderTime = document.getElementById("reminderTime");
-const addReminderBtn = document.getElementById("addReminderBtn");
-
-// Load reminders from storage
-function loadReminders() {
-  chrome.storage.local.get(["reminders"], (data) => {
-    const reminders = data.reminders || [];
-    renderReminders(reminders);
-  });
-}
-
-// Save a new reminder
-if (addReminderBtn) {
-  addReminderBtn.addEventListener("click", () => {
-    const text = reminderInput.value.trim();
-    const time = reminderTime.value;
-
-    if (!text || !time) {
-      alert("Please enter reminder text and time!");
-      return;
-    }
-
-    const reminder = { text, time, id: Date.now() };
-    chrome.storage.local.get(["reminders"], (data) => {
-      const reminders = data.reminders || [];
-      reminders.push(reminder);
-      chrome.storage.local.set({ reminders }, () => {
-        renderReminders(reminders);
-        scheduleReminder(reminder);
-        reminderInput.value = "";
-        reminderTime.value = "";
-      });
+// Tabs
+function setupTabs() {
+  const tabButtons = document.querySelectorAll(".tab");
+  const tabContents = document.querySelectorAll(".tab-content");
+  tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.getAttribute("data-tab");
+      tabButtons.forEach((b) => b.classList.remove("active"));
+      tabContents.forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      const content = document.getElementById(target);
+      if (content) content.classList.add("active");
     });
   });
 }
 
-// Render reminder list
-function renderReminders(reminders) {
-  if (!reminderList) return;
-  reminderList.innerHTML = "";
+// Focus tab controls
+function initFocusControls() {
+  const blockToggle = document.getElementById("blockToggle");
+  const blockedListEl = document.getElementById("blockedList");
+  const newSiteInput = document.getElementById("newSite");
+  const addButton = document.getElementById("addButton");
+  const statsContent = document.getElementById("statsContent");
 
-  if (reminders.length === 0) {
-    reminderList.innerHTML = `<p style="opacity:0.6">No reminders set.</p>`;
-    return;
+  // Load initial state
+  chrome.storage.sync.get(["isBlocking", "blockedSites"], (data) => {
+    if (blockToggle) blockToggle.checked = !!data.isBlocking;
+    renderBlockedSites(blockedListEl, data.blockedSites || []);
+  });
+
+  // Toggle blocking
+  if (blockToggle) {
+    blockToggle.addEventListener("change", () => {
+      const enabled = blockToggle.checked;
+      chrome.storage.sync.set({ isBlocking: enabled }, () => {
+        chrome.runtime.sendMessage({ action: "toggleBlocking", enabled });
+      });
+    });
   }
 
-  reminders.forEach((r) => {
-    const el = document.createElement("div");
-    el.className = "reminder-item";
-    el.innerHTML = `
-      <div>
-        <strong>${r.text}</strong><br>
-        <small>${r.time}</small>
-      </div>
-      <button data-id="${r.id}" class="delete-reminder">🗑️</button>
-    `;
-    reminderList.appendChild(el);
-  });
-
-  // Delete reminder handler
-  document.querySelectorAll(".delete-reminder").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const id = parseInt(e.target.getAttribute("data-id"));
-      chrome.storage.local.get(["reminders"], (data) => {
-        const reminders = (data.reminders || []).filter((r) => r.id !== id);
-        chrome.storage.local.set({ reminders }, () => renderReminders(reminders));
+  // Add blocked site
+  if (addButton && newSiteInput) {
+    addButton.addEventListener("click", () => {
+      const site = (newSiteInput.value || "").trim().replace(/^https?:\/\//, "");
+      if (!site) return;
+      chrome.storage.sync.get(["blockedSites"], (data) => {
+        const list = data.blockedSites || [];
+        if (!list.includes(site)) list.push(site);
+        chrome.storage.sync.set({ blockedSites: list }, () => {
+          renderBlockedSites(blockedListEl, list);
+          newSiteInput.value = "";
+        });
       });
     });
+  }
+
+  // Render stats (today)
+  if (statsContent) {
+    renderStats(statsContent);
+    // Refresh briefly after open
+    setTimeout(() => renderStats(statsContent), 500);
+  }
+}
+
+function renderBlockedSites(container, sites) {
+  if (!container) return;
+  container.innerHTML = "";
+  if (!sites.length) {
+    container.innerHTML = '<div class="empty-state">No sites blocked yet</div>';
+    return;
+  }
+  sites.forEach((site, idx) => {
+    const tag = document.createElement("div");
+    tag.className = "blocked-tag";
+    tag.textContent = site;
+    tag.title = "Click to remove";
+    tag.style.cursor = "pointer";
+    tag.addEventListener("click", () => {
+      chrome.storage.sync.get(["blockedSites"], (data) => {
+        const list = (data.blockedSites || []).filter((s) => s !== site);
+        chrome.storage.sync.set({ blockedSites: list }, () => renderBlockedSites(container, list));
+      });
+    });
+    container.appendChild(tag);
   });
 }
 
-// Schedule reminder notification
-function scheduleReminder(reminder) {
-  const now = new Date();
-  const reminderTime = new Date(reminder.time);
+function renderStats(container) {
+  chrome.storage.local.get(["trackingData"], (data) => {
+    const tracking = data.trackingData || {};
+    const today = new Date().toDateString();
+    const dayData = tracking[today] || {};
+    const domains = Object.keys(dayData);
+    if (!domains.length) {
+      container.innerHTML = '<div class="empty-state">No activity tracked yet</div>';
+      return;
+    }
+    container.innerHTML = domains
+      .sort((a, b) => (dayData[b].timeSpent || 0) - (dayData[a].timeSpent || 0))
+      .slice(0, 8)
+      .map((d) => {
+        const visits = dayData[d].visits || 0;
+        const secs = dayData[d].timeSpent || 0;
+        const mins = Math.round(secs / 60);
+        return `
+          <div class="site-item">
+            <span class="site-name">${d}</span>
+            <span class="site-visits">${visits} visits • ${mins} min</span>
+          </div>`;
+      })
+      .join("");
+  });
+}
 
-  const delay = reminderTime.getTime() - now.getTime();
-  if (delay <= 0) return; // skip past reminders
+// AI tab controls
+function initAIControls() {
+  const reminderToggle = document.getElementById("reminderToggle");
+  const intervalSelect = document.getElementById("reminderInterval");
+  const testBtn = document.getElementById("testReminder");
 
-  setTimeout(() => {
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icons/icon128.png",
-      title: "⏰ Focus AI Reminder",
-      message: reminder.text,
+  chrome.storage.sync.get(["aiRemindersEnabled", "reminderInterval"], (data) => {
+    if (reminderToggle) reminderToggle.checked = data.aiRemindersEnabled !== false;
+    if (intervalSelect && data.reminderInterval) intervalSelect.value = String(data.reminderInterval);
+  });
+
+  if (reminderToggle) {
+    reminderToggle.addEventListener("change", () => {
+      const enabled = reminderToggle.checked;
+      chrome.storage.sync.set({ aiRemindersEnabled: enabled }, () => {
+        chrome.runtime.sendMessage({ action: "toggleReminders", enabled });
+      });
+    });
+  }
+
+  if (intervalSelect) {
+    intervalSelect.addEventListener("change", () => {
+      const minutes = parseInt(intervalSelect.value, 10) || 30;
+      chrome.storage.sync.set({ reminderInterval: minutes }, () => {
+        // ask background to re-arm immediately
+        chrome.runtime.sendMessage({ action: "toggleReminders", enabled: true });
+        // show next alarm time if available
+        if (typeof chrome.alarms?.get === 'function') {
+          chrome.alarms.get('aiReminder', (alarm) => {
+            if (alarm) {
+              const when = new Date(alarm.scheduledTime);
+              console.log('Next AI reminder at', when.toLocaleTimeString());
+            }
+          });
+        }
+      });
+    });
+  }
+
+  if (testBtn) {
+    testBtn.addEventListener("click", () => {
+      let responded = false;
+      try {
+        chrome.runtime.sendMessage({ action: "testReminder" }, () => {
+          responded = true;
+          if (chrome.runtime.lastError) {
+            // fallback to create from popup context
+            tryCreateLocalNotification();
+          }
+        });
+        // if background doesn't respond (service worker asleep), fallback after short delay
+        setTimeout(() => {
+          if (!responded) tryCreateLocalNotification();
+        }, 300);
+      } catch (_) {
+        tryCreateLocalNotification();
+      }
+    });
+  }
+
+  // Listen for background confirmation of reminders
+  try {
+    chrome.runtime.onMessage.addListener((req) => {
+      if (req && req.action === 'aiReminderFired') {
+        console.log('AI reminder fired:', req.message);
+      }
+    });
+  } catch (_) {}
+}
+
+function tryCreateLocalNotification() {
+  try {
+    chrome.notifications.create('focusai-test-' + Date.now(), {
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title: 'Focus AI Reminder',
+      message: 'Test reminder from popup',
       priority: 2,
+      requireInteraction: true
     });
-
-    // auto-remove after firing
-    chrome.storage.local.get(["reminders"], (data) => {
-      const reminders = (data.reminders || []).filter((r) => r.id !== reminder.id);
-      chrome.storage.local.set({ reminders }, () => renderReminders(reminders));
-    });
-  }, delay);
+  } catch (e) {
+    console.warn('Local notification failed:', e && (e.message || e));
+    alert('Notifications appear blocked by the OS or browser. Please enable notifications for Chrome.');
+  }
 }
 
 // ============================
 // 🎧 Integrated Music Player
 // ============================
 
-const audioPlayer = document.getElementById("audioPlayer");
-const playlistContainer = document.getElementById("playlistMini");
-const playPauseBtn = document.getElementById("playPauseBtn");
-const trackCountEl = document.getElementById("trackCount");
-const statusMessage = document.getElementById("statusMessage");
+let audioPlayer;
+let playlistContainer;
+let playPauseBtn;
+let prevBtn;
+let nextBtn;
+let volumeSlider;
+let albumIcon;
+let currentTrackNameEl;
+let statusMessageEl;
 
-// --- Default online playlist (free, CORS-safe) ---
+// --- Default local playlist (packaged in extension for reliability) ---
 const playlist = [
   {
     title: "☕ Coffee Shop",
     artist: "Lofi Beats",
-    src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Jazz_Sampler/Kevin_MacLeod_-_Local_Forecast_Slower.mp3",
+    src: chrome.runtime.getURL("music/coffee-shop.mp3.mp3"),
   },
   {
     title: "🎷 Jazz Lofi",
     artist: "Relax Vibes",
-    src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Calming/Kevin_MacLeod_-_Porch_Swing_Days_-_slower.mp3",
+    src: chrome.runtime.getURL("music/jazz-lofi.mp3"),
   },
   {
     title: "🎵 Lofi Chill",
     artist: "Study Flow",
-    src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Jazz_Sampler/Kevin_MacLeod_-_Backed_Vibes_Clean.mp3",
+    src: chrome.runtime.getURL("music/lofi-chill.mp3"),
   },
   {
     title: "🌧 Rain Lofi",
     artist: "Ambient Relax",
-    src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Calming/Kevin_MacLeod_-_At_Rest.mp3",
+    src: chrome.runtime.getURL("music/rain-lofi.mp3"),
   },
 ];
 
 let currentTrack = -1;
 let isPlaying = false;
+let useOffscreenAudio = true;
 
 // --- Render Playlist ---
 function renderPlaylist() {
   if (!playlistContainer) return;
   playlistContainer.innerHTML = "";
-
   playlist.forEach((track, index) => {
     const el = document.createElement("div");
     el.className = "track-item";
@@ -165,9 +272,36 @@ function renderPlaylist() {
     el.addEventListener("click", () => playTrack(index));
     playlistContainer.appendChild(el);
   });
+  if (statusMessageEl) statusMessageEl.textContent = "🎶 Choose a song to play below.";
+}
 
-  if (trackCountEl) trackCountEl.textContent = playlist.length;
-  if (statusMessage) statusMessage.textContent = "🎶 Choose a song to play below.";
+// --- Centralized autoplay fallback helper ---
+function playWithAutoplayFallback() {
+  return new Promise((resolve, reject) => {
+    if (!audioPlayer) return reject(new Error("No audio element"));
+    audioPlayer.play()
+      .then(resolve)
+      .catch((err) => {
+        const name = (err && err.name) || "";
+        if (name === "NotAllowedError" || name === "DOMException") {
+          try {
+            audioPlayer.muted = true;
+            audioPlayer.play()
+              .then(() => {
+                setTimeout(() => {
+                  audioPlayer.muted = false;
+                  resolve();
+                }, 200);
+              })
+              .catch(reject);
+          } catch (e) {
+            reject(err || e);
+          }
+        } else {
+          reject(err);
+        }
+      });
+  });
 }
 
 // --- Play selected track ---
@@ -175,35 +309,72 @@ function playTrack(index) {
   if (index < 0 || index >= playlist.length) return;
   currentTrack = index;
   const track = playlist[index];
-
-  audioPlayer.src = track.src;
-  audioPlayer.play()
-    .then(() => {
-      isPlaying = true;
-      updatePlayButton();
-      statusMessage.textContent = `▶️ Now playing: ${track.title}`;
-      highlightTrack(index);
-    })
-    .catch((err) => {
-      console.error("Playback failed:", err);
-      statusMessage.textContent = "⚠️ Could not play track.";
+  if (useOffscreenAudio) {
+    sendAudioCommand('audio:init', { playlist, volume: 0.7 }).finally(() => {
+      sendAudioCommand('audio:playIndex', { index })
+        .then(() => {
+          isPlaying = true;
+          updatePlayButton();
+          if (statusMessageEl) statusMessageEl.textContent = `▶️ Now playing: ${track.title}`;
+          if (currentTrackNameEl) currentTrackNameEl.textContent = track.title;
+          if (albumIcon) albumIcon.classList.add("playing");
+          highlightTrack(index);
+        })
+        .catch((e) => {
+          console.error('Playback failed:', e);
+          if (statusMessageEl) statusMessageEl.textContent = "⚠️ Could not play track.";
+        });
     });
+  } else {
+    audioPlayer.src = track.src;
+    try { audioPlayer.crossOrigin = "anonymous"; } catch (_) {}
+    audioPlayer.load();
+    playWithAutoplayFallback()
+      .then(() => {
+        isPlaying = true;
+        updatePlayButton();
+        if (statusMessageEl) statusMessageEl.textContent = `▶️ Now playing: ${track.title}`;
+        if (currentTrackNameEl) currentTrackNameEl.textContent = track.title;
+        if (albumIcon) albumIcon.classList.add("playing");
+        highlightTrack(index);
+      })
+      .catch((err) => {
+        console.error("Playback failed:", err && (err.name + ": " + (err.message || "")));
+        if (statusMessageEl) statusMessageEl.textContent = "⚠️ Could not play track. Try another or click ▶️ again.";
+      });
+  }
 }
 
 // --- Toggle play/pause ---
 function togglePlay() {
-  if (!audioPlayer) return;
+  if (!useOffscreenAudio && !audioPlayer) return;
   if (isPlaying) {
     audioPlayer.pause();
     isPlaying = false;
-    statusMessage.textContent = "⏸ Paused";
+    if (statusMessageEl) statusMessageEl.textContent = "⏸ Paused";
+    if (albumIcon) albumIcon.classList.remove("playing");
   } else {
     if (currentTrack === -1) {
       playTrack(0);
     } else {
-      audioPlayer.play();
-      isPlaying = true;
-      statusMessage.textContent = `▶️ Resumed: ${playlist[currentTrack].title}`;
+      if (useOffscreenAudio) {
+        sendAudioCommand('audio:toggle').then(() => {
+          isPlaying = !isPlaying;
+          if (statusMessageEl) statusMessageEl.textContent = isPlaying ? `▶️ Resumed: ${playlist[currentTrack].title}` : '⏸ Paused';
+          if (albumIcon) albumIcon.classList.toggle('playing', isPlaying);
+        });
+      } else {
+        playWithAutoplayFallback()
+          .then(() => {
+            isPlaying = true;
+            if (statusMessageEl) statusMessageEl.textContent = `▶️ Resumed: ${playlist[currentTrack].title}`;
+            if (albumIcon) albumIcon.classList.add("playing");
+          })
+          .catch((err) => {
+            console.error("Playback failed:", err && (err.name + ": " + (err.message || "")));
+            if (statusMessageEl) statusMessageEl.textContent = "🔈 Click ▶️ to allow audio playback.";
+          });
+      }
     }
   }
   updatePlayButton();
@@ -211,13 +382,12 @@ function togglePlay() {
 
 // --- Update play/pause button ---
 function updatePlayButton() {
-  if (playPauseBtn) {
-    playPauseBtn.textContent = isPlaying ? "⏸ Pause" : "▶️ Play";
-  }
+  if (playPauseBtn) playPauseBtn.textContent = isPlaying ? "⏸" : "▶️";
 }
 
 // --- Highlight current track ---
 function highlightTrack(index) {
+  if (!playlistContainer) return;
   const allTracks = playlistContainer.querySelectorAll(".track-item");
   allTracks.forEach((item, i) => {
     item.style.background = i === index ? "rgba(255,255,255,0.1)" : "transparent";
@@ -225,23 +395,94 @@ function highlightTrack(index) {
 }
 
 // --- Auto-play next track ---
-audioPlayer.addEventListener("ended", () => {
-  if (currentTrack < playlist.length - 1) {
-    playTrack(currentTrack + 1);
-  } else {
-    isPlaying = false;
-    updatePlayButton();
-    statusMessage.textContent = "🎵 Playlist finished.";
-  }
-});
+function bindAudioEvents() {
+  if (!audioPlayer) return;
+  audioPlayer.addEventListener("ended", () => {
+    if (currentTrack < playlist.length - 1) {
+      playTrack(currentTrack + 1);
+    } else {
+      isPlaying = false;
+      updatePlayButton();
+      if (statusMessageEl) statusMessageEl.textContent = "🎵 Playlist finished.";
+      if (albumIcon) albumIcon.classList.remove("playing");
+    }
+  });
+}
 
 // --- Bind play/pause button ---
-if (playPauseBtn) playPauseBtn.addEventListener("click", togglePlay);
+function initMusicPlayer() {
+  audioPlayer = document.getElementById("audioPlayer");
+  playlistContainer = document.getElementById("playlistMini");
+  playPauseBtn = document.getElementById("playPause");
+  prevBtn = document.getElementById("prevTrack");
+  nextBtn = document.getElementById("nextTrack");
+  volumeSlider = document.getElementById("volume");
+  albumIcon = document.getElementById("albumIcon");
+  currentTrackNameEl = document.getElementById("currentTrackName");
+  statusMessageEl = document.getElementById("musicStatus");
 
-// --- Spacebar shortcut ---
-document.addEventListener("keydown", (e) => {
-  if (e.code === "Space") {
-    e.preventDefault();
-    togglePlay();
+  if (audioPlayer) {
+    audioPlayer.volume = 0.7;
+    try { audioPlayer.preload = "auto"; } catch (_) {}
+    bindAudioEvents();
   }
-});
+  renderPlaylist();
+
+  if (playPauseBtn) playPauseBtn.addEventListener("click", togglePlay);
+  if (prevBtn) prevBtn.addEventListener("click", () => {
+    if (useOffscreenAudio) {
+      const idx = currentTrack > 0 ? currentTrack - 1 : playlist.length - 1;
+      sendAudioCommand('audio:playIndex', { index: idx }).then(() => {
+        currentTrack = idx;
+        isPlaying = true;
+        updatePlayButton();
+        if (statusMessageEl) statusMessageEl.textContent = `▶️ Now playing: ${playlist[idx].title}`;
+        if (currentTrackNameEl) currentTrackNameEl.textContent = playlist[idx].title;
+        if (albumIcon) albumIcon.classList.add("playing");
+        highlightTrack(idx);
+      }).catch((e) => console.error('Playback failed:', e));
+    } else if (currentTrack > 0) {
+      playTrack(currentTrack - 1);
+    }
+  });
+  if (nextBtn) nextBtn.addEventListener("click", () => {
+    if (useOffscreenAudio) {
+      const idx = currentTrack < playlist.length - 1 ? currentTrack + 1 : 0;
+      sendAudioCommand('audio:playIndex', { index: idx }).then(() => {
+        currentTrack = idx;
+        isPlaying = true;
+        updatePlayButton();
+        if (statusMessageEl) statusMessageEl.textContent = `▶️ Now playing: ${playlist[idx].title}`;
+        if (currentTrackNameEl) currentTrackNameEl.textContent = playlist[idx].title;
+        if (albumIcon) albumIcon.classList.add("playing");
+        highlightTrack(idx);
+      }).catch((e) => console.error('Playback failed:', e));
+    } else if (currentTrack < playlist.length - 1) {
+      playTrack(currentTrack + 1);
+    }
+  });
+  if (volumeSlider) volumeSlider.addEventListener("input", () => {
+    const v = Math.max(0, Math.min(100, parseInt(volumeSlider.value || "70", 10)));
+    if (!useOffscreenAudio && audioPlayer) audioPlayer.volume = v / 100;
+    if (useOffscreenAudio) sendAudioCommand('audio:setVolume', { volume: v / 100 });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+      e.preventDefault();
+      togglePlay();
+    }
+  });
+}
+
+function sendAudioCommand(action, payload = {}) {
+  return new Promise((resolve, reject) => {
+    try {
+      chrome.runtime.sendMessage({ action, ...payload }, (resp) => {
+        if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+        if (!resp || resp.ok === false) return reject(resp && resp.error ? new Error(resp.error) : new Error('Unknown audio error'));
+        resolve(resp);
+      });
+    } catch (e) { reject(e); }
+  });
+}
