@@ -1,6 +1,6 @@
 # 🎯 Focus AI — Chrome Productivity Extension
 
-> **Stay focused, block distractions, and boost your productivity** with Focus AI — an AI-powered Chrome extension designed to help you stay in flow. It combines website blocking, relaxing background music, and productivity analytics in one beautiful, minimal interface.
+> **Stay focused, block distractions, and boost your productivity** with **Focus AI** — an AI-powered Chrome extension designed to help you stay in flow. It combines website blocking, relaxing background music, and productivity analytics — all in one clean, modern interface.
 
 ---
 
@@ -10,58 +10,60 @@
 Stay focused by blocking time-wasting sites like YouTube, Instagram, and Twitter with a single toggle.
 
 ### 🎵 Focus Music
-Listen to background Lo-Fi, jazz, and rain sounds to help you concentrate while working or studying.
+Listen to background **Lo-Fi**, **jazz**, and **rain** sounds to stay calm and productive while working or studying.
 
 ### 📊 AI Analytics
-Visualize your productivity trends and focus habits through smart analytics and weekly charts.
+Visualize your productivity habits with smart analytics, daily focus stats, and a 7-day focus chart.
 
-### 🧠 Smart Design
-A minimal, modern popup UI built for simplicity and performance — no clutter, just focus.
+### 💎 Modern Design
+Beautiful, minimal, and responsive popup UI built to keep your workspace distraction-free.
 
 ---
 
 ## 🧩 Installation Guide
 
-Follow these simple steps to install Focus AI manually:
+### 🪄 Step-by-step setup:
 
-1. **Download the ZIP file**  
+1. **Download the ZIP file:**  
    👉 [Click here to download Focus AI](downloads/FocusAI.zip)
 
 2. **Extract the ZIP** to a folder on your computer.
 
-3. Open Google Chrome and navigate to:
+3. Open Google Chrome and go to:
    ```
    chrome://extensions
    ```
 
-4. Enable **Developer Mode** (top right corner toggle).
+4. Enable **Developer Mode** (toggle in the top-right corner).
 
 5. Click **Load unpacked** and select the extracted Focus AI folder.
 
-6. ✅ Focus AI will now appear in your Chrome toolbar!
+6. ✅ You’re all set! Focus AI will now appear in your Chrome toolbar.
 
 ---
 
-## 🪄 How It Works
+## 💡 How It Works
 
-- Turn on the **Block Distractions** toggle to instantly block unwanted sites.  
-- Enjoy background **Lo-Fi music** that keeps playing even when the popup is closed.  
-- Track your progress and productivity with **AI-powered analytics** that update in real time.  
-
----
-
-## 📸 Preview
-
-![Focus Tab](screenshots/focus-tab.png)
-![Music Tab](screenshots/music-tab.png)
-![Analytics Tab](screenshots/analytics-tab.png)
+- Toggle **Block Distractions** to instantly block distracting sites.
+- Play background **Lo-Fi music** or add your own tracks.
+- Check your **AI Analytics** tab to see daily focus scores and trends.
 
 ---
 
-## 💡 Tips
-- To stop music or switch tracks, open the **Music** tab.  
-- You can add your own custom songs via the **Add Song** button.  
-- Use the **AI Analytics** tab daily to monitor your improvement.
+## 🖼️ Visual Preview
+
+<div align="center" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <img src="screenshots/focus-tab.png" alt="Focus Tab" width="300" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);"/>
+  <img src="screenshots/music-tab.png" alt="Music Tab" width="300" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);"/>
+  <img src="screenshots/analytics-tab.png" alt="Analytics Tab" width="300" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);"/>
+</div>
+
+---
+
+## ⚡ Tips for Best Experience
+- 🎧 Use **Music Mode** with your favorite track while working.
+- 📈 Review **AI Analytics** daily to improve your focus streak.
+- 🚀 Customize your blocked sites list anytime from the Focus tab.
 
 ---
 
@@ -74,4 +76,6 @@ Follow these simple steps to install Focus AI manually:
 ---
 
 ## 📜 License
-This project is open source under the **MIT License** — feel free to explore, learn, and build upon Focus AI.
+Released under the **MIT License** — free to use, learn, and build upon.
+
+> _Made with ❤️ for productivity and peace of mind._
