@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      text-align: center;
+      width: 400px;
+      max-height: 600px;
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-attachment: fixed;
+      color: white;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+ /* 🌌 Focus AI — Minimal Gradient Scrollbar with Subtle Border */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* Track (background area of scrollbar) */
+::-webkit-scrollbar-track {
+  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); /* matches popup background */
+  border-radius: 8px;
+}
+
+/* Thumb (scroll handle) */
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);       /* semi-transparent, blends with gradient */
+  border: 2px solid rgba(255, 255, 255, 0.2);  /* soft outer border */
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect — subtle glow */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* Corner (for diagonal scroll areas) */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar support */
+body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+
+    
+    .header {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    
+    .header p {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 5px;
+      margin: 20px;
+      border-radius: 10px;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .content {
+      padding: 0 20px 20px;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .toggle-section {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .toggle-label {
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+    
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.3);
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+    
+    .stats {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .stats h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .site-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 13px;
+    }
+    
+    .site-item:last-child {
+      border-bottom: none;
+    }
+    
+    .site-name {
+      font-weight: 500;
+      opacity: 0.9;
+    }
+    
+    .site-visits {
+      opacity: 0.7;
+    }
+    
+    .blocked-sites {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+    }
+    
+    .blocked-sites h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .blocked-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    
+    .blocked-tag {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .blocked-tag:hover {
+      background: rgba(244, 67, 54, 0.6);
+    }
+    
+    .add-site {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+    }
+    
+    .add-site input {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    
+    .add-site button {
+      padding: 8px 15px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s;
+    }
+    
+    .add-site button:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+    
+    .empty-state {
+      text-align: center;
+      opacity: 0.6;
+      font-size: 12px;
+      padding: 10px 0;
+    }
+    
+    /* NEW MUSIC PLAYER DESIGN */
+    .music-player {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .music-player h3 {
+      font-size: 14px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    /* Track Selection */
+    .track-selector {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .track-selector h4 {
+      font-size: 13px;
+      margin-bottom: 12px;
+      opacity: 0.9;
+    }
+
+    .track-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .track-card {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+      text-align: center;
+    }
+
+    .track-card:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .track-card.active {
+      background: rgba(76, 175, 80, 0.4);
+      border-color: #4CAF50;
+    }
+
+    .track-icon {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    .track-title {
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    /* Current Playing Info */
+    .now-playing-info {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .playing-icon {
+      font-size: 32px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .playing-text {
+      flex: 1;
+      text-align: left;
+    }
+
+    .playing-label {
+      font-size: 10px;
+      opacity: 0.7;
+      margin-bottom: 3px;
+    }
+
+    .playing-track {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Volume Control */
+    .volume-section {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .volume-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .volume-label {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .volume-value {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .volume-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.3);
+      outline: none;
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+
+    /* Music Tips */
+    .music-tips {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.5;
+      opacity: 0.85;
+      text-align: left;
+    }
+
+     .status-msg {
+      font-size: 11px;
+      text-align: center;
+      margin-top: 10px;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+    }
+
+    /* AI Analytics Styles */
+    .productivity-score {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 15px;
+      border-radius: 50%;
+      background: conic-gradient(#4CAF50 0deg, #4CAF50 0deg, rgba(255,255,255,0.2) 0deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.5s ease;
+    }
+
+    .score-inner {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-value {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 10px;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    .score-rating {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .score-description {
+      font-size: 11px;
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+
+    .usage-chart {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .usage-chart h3 {
+      font-size: 14px;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    .chart-container {
+      height: 150px;
+      position: relative;
+    }
+
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      height: 120px;
+      gap: 5px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: rgba(76, 175, 80, 0.6);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      transition: all 0.3s;
+      min-height: 5px;
+    }
+
+    .chart-bar:hover {
+      background: rgba(76, 175, 80, 0.8);
+    }
+
+    .chart-labels {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 8px;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-icon {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .insights {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .insights h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .insight-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .insight-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* Playback Controls */
+.playback-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.control-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.control-btn:active {
+  transform: translateY(0);
+}
+
+.pause-btn {
+  background: white;
+  color: #667eea;
+}
+
+.add-btn {
+  background: white;
+  color: #4CAF50;
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.btn-text {
+  font-size: 12px;
+}
+
+.now-playing-info {
+  display: flex;
+  flex-direction: column;       /* stack icon + text vertically */
+  align-items: center;          /* center horizontally */
+  justify-content: center;      /* center vertically if it has height */
+  text-align: center;           /* center text */
+  background: rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.playing-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+  animation: pulse 2s infinite;
+}
+
+.playing-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.playing-label {
+  font-size: 11px;
+  opacity: 0.75;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.playing-track {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+}
+
+    
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎯 Focus AI</h1>
+    <p>AI-powered focus & productivity</p>
+  </div>
+  
+  <div class="tabs">
+    <div class="tab active" data-tab="focus">🚫 Focus</div>
+    <div class="tab" data-tab="music">🎵 Music</div>
+    <div class="tab" data-tab="ai">📊 AI Analysis</div>
+  </div>
+  
+  <div class="content">
+    <!-- Focus Tab (unchanged from your original) -->
+    <div class="tab-content active" id="focus">
+      <div class="toggle-section">
+        <span class="toggle-label">Block Distractions</span>
+        <label class="toggle">
+          <input type="checkbox" id="blockToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="stats">
+        <h3>📊 Today's Activity</h3>
+        <div id="statsContent">
+          <div class="empty-state">No activity tracked yet</div>
+        </div>
+      </div>
+      
+      <div class="blocked-sites">
+        <h3>🚫 Blocked Sites</h3>
+        <div class="blocked-list" id="blockedList"></div>
+        <div class="add-site">
+          <input type="text" id="newSite" placeholder="example.com">
+          <button id="addButton">Add</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Music Tab (updated: Play/Pause + Add song) -->
+    <div class="tab-content" id="music">
+      <div class="music-player">
+        <h3>🎵 Focus Music Player</h3>
+        
+        <!-- Now Playing Info -->
+        <div class="now-playing-info">
+          <div class="playing-icon" id="playingIcon">🎵</div>
+          <div class="playing-text">
+            <div class="playing-label">NOW PLAYING</div>
+            <div class="playing-track" id="currentTrackName">Select a track below</div>
+          </div>
+        </div>
+        
+        <!-- Track Selection Grid -->
+        <div class="track-selector">
+          <h4>🎼 Choose Your Focus Music</h4>
+          <div class="track-grid" id="trackGrid"></div>
+        </div>
+
+        <!-- Controls: Play/Pause + Add Custom Song -->
+        <!-- Playback Controls -->
+        <div class="playback-controls">
+          <button class="control-btn pause-btn" id="playPauseBtn">
+          <span class="btn-icon">⏸️</span>
+          <span class="btn-text">Pause</span>
+        </button>
+          <input type="file" id="customSongInput" accept="audio/mp3,audio/mpeg" style="display:none;">
+          <button class="control-btn add-btn" id="addSongBtn">
+          <span class="btn-icon">➕</span>
+          <span class="btn-text">Add Custom Song</span>
+        </button>
+        </div>
+         
+
+        <!-- Volume Control -->
+        <div class="volume-section">
+          <div class="volume-header">
+            <span class="volume-label">🔊 Volume</span>
+            <span class="volume-value" id="volumeValue">70%</span>
+          </div>
+          <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+        </div>
+
+        <!-- Music Tips -->
+        <div class="music-tips">
+          💡 <strong>Tip:</strong> Music plays in the background even when you close this popup. Perfect for long focus sessions!
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Analytics Tab (unchanged) -->
+    <div class="tab-content" id="ai">
+      <div class="productivity-score">
+        <div class="score-circle" id="scoreCircle">
+          <div class="score-inner">
+            <div class="score-value" id="scoreValue">0</div>
+            <div class="score-label">SCORE</div>
+          </div>
+        </div>
+        <div class="score-rating" id="scoreRating">Getting Started</div>
+        <div class="score-description" id="scoreDescription">Start tracking to build your productivity score!</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value" id="focusTimeValue">0 m</div>
+          <div class="stat-label">Focus Time Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value" id="blocksCountValue">0</div>
+          <div class="stat-label">Distractions Blocked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value" id="streakValue">0</div>
+          <div class="stat-label">Day Streak</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-value" id="avgScoreValue">0</div>
+          <div class="stat-label">Weekly Average</div>
+        </div>
+      </div>
+
+      <div class="usage-chart">
+        <h3>📊 7-Day Focus Trend</h3>
+        <div class="chart-container">
+          <div class="chart-bars" id="chartBars"></div>
+          <div class="chart-labels" id="chartLabels"></div>
+        </div>
+      </div>
+
+      <div class="insights">
+        <h3>💡 AI Insights</h3>
+        <div id="insightsList">
+          <div class="insight-item">
+            <span class="insight-icon">📊</span>
+            <span>Analyzing your productivity patterns...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup-2.js"></script>
+</body>
+</html>
