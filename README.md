@@ -52,11 +52,10 @@ Beautiful, minimal, and responsive popup UI built to keep your workspace distrac
 
 ## 🖼️ Visual Preview
 
-<div align="center" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
-  <img src="screenshots/focus-tab.png" alt="Focus Tab" width="300" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);"/>
-  <img src="screenshots/music-tab.png" alt="Music Tab" width="300" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);"/>
-  <img src="screenshots/analytics-tab.png" alt="Analytics Tab" width="300" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);"/>
-</div>
+<p align="center">
+  <img src="banner.png" alt="Focus AI Banner" width="100%" style="max-width: 800px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" />
+</p>
+
 
 ---
 

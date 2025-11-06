@@ -1,6 +1,6 @@
-// =============================================
-// 🚫 Focus AI — Content Script (Blocker + Time Tracker)
-// =============================================
+
+//  Focus AI — Content Script
+
 
 // 🛡️ Safe Chrome API wrapper
 function safeChrome(fn) {
@@ -12,7 +12,7 @@ function safeChrome(fn) {
   }
 }
 
-// ----------- 1️⃣  BLOCK DISTRACTING SITES -----------
+
 safeChrome(() => {
   chrome.storage.sync.get(["isBlocking", "blockedSites"], (data) => {
     if (!data.isBlocking) return; // Blocking disabled
@@ -32,7 +32,7 @@ safeChrome(() => {
   });
 });
 
-// ----------- 2️⃣  TRACK ACTIVE TIME ON PAGE -----------
+
 let activeTime = 0;
 let isActive = true;
 let intervalId = null;

@@ -1,6 +1,4 @@
-// =============================
-// 🎧 Offscreen Audio Controller
-// =============================
+//  Offscreen Audio Controller
 
 console.log("[Offscreen] Audio controller loaded");
 
