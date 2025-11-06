@@ -2,9 +2,9 @@ console.log("🧠 Focus AI background service worker active");
 
 let audioPort = null;
 
-// =============================
+
 // 🔧 Extension Installation Setup
-// =============================
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Focus AI installed");
 
@@ -40,9 +40,9 @@ chrome.runtime.onInstalled.addListener(() => {
   );
 });
 
-// =============================
-// ⏰ Reminder Scheduling (Simple)
-// =============================
+
+//  Reminder Scheduling
+
 function setupReminders() {
   chrome.alarms.clear("focusReminder", () => {
     chrome.storage.sync.get(["aiRemindersEnabled", "reminderInterval"], (data) => {
@@ -71,9 +71,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// =============================
-// 🎧 Offscreen Audio Logic
-// =============================
+
+//  Offscreen Audio Logic
+
 async function ensureOffscreenDocument() {
   const offscreenUrl = chrome.runtime.getURL("offscreenAudio.html");
   const hasDoc = await chrome.offscreen.hasDocument();
@@ -87,9 +87,9 @@ async function ensureOffscreenDocument() {
   }
 }
 
-// =============================
-// 🔊 Message Handler
-// =============================
+
+//  Message Handler
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg?.action) return;
 
@@ -128,7 +128,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
-  // --- OTHER ACTIONS (future ready) ---
+  
   if (msg.action === "refreshReminders") {
     setupReminders();
     sendResponse({ success: true });
