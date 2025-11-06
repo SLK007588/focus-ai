@@ -22,7 +22,7 @@
       overflow-x: hidden;
     }
     
- /* 🌌 Focus AI — Minimal Gradient Scrollbar with Subtle Border */
+ /*Scrollbar*/
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -59,9 +59,6 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.2) transparent;
 }
-
-
-    
     .header {
       padding: 20px;
       text-align: center;
@@ -663,10 +660,10 @@ body {
 
 .now-playing-info {
   display: flex;
-  flex-direction: column;       /* stack icon + text vertically */
-  align-items: center;          /* center horizontally */
-  justify-content: center;      /* center vertically if it has height */
-  text-align: center;           /* center text */
+  flex-direction: column;       
+  align-items: center;        
+  justify-content: center;      
+  text-align: center;          
   background: rgba(255, 255, 255, 0.1);
   padding: 16px;
   border-radius: 10px;
@@ -719,7 +716,7 @@ body {
   </div>
   
   <div class="content">
-    <!-- Focus Tab (unchanged from your original) -->
+    
     <div class="tab-content active" id="focus">
       <div class="toggle-section">
         <span class="toggle-label">Block Distractions</span>
@@ -746,7 +743,7 @@ body {
       </div>
     </div>
     
-    <!-- Music Tab (updated: Play/Pause + Add song) -->
+    <!-- Music Tab -->
     <div class="tab-content" id="music">
       <div class="music-player">
         <h3>🎵 Focus Music Player</h3>
@@ -780,7 +777,6 @@ body {
         </button>
         </div>
          
-
         <!-- Volume Control -->
         <div class="volume-section">
           <div class="volume-header">
@@ -797,7 +793,7 @@ body {
       </div>
     </div>
 
-    <!-- AI Analytics Tab (unchanged) -->
+    <!-- AI Analytics Tab -->
     <div class="tab-content" id="ai">
       <div class="productivity-score">
         <div class="score-circle" id="scoreCircle">
