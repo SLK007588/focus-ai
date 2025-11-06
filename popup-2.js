@@ -1,12 +1,8 @@
-// ============================
-// 🧠 Focus AI Popup Main Script (updated)
-// ============================
+// Focus AI Popup Main Script
 
 console.log("Focus AI popup initializing...");
 
-// ============================
-// Global State / Base Playlist
-// ============================
+// Base Playlist
 let currentTrackIndex = 0;
 
 const basePlaylist = [
@@ -16,9 +12,9 @@ const basePlaylist = [
   { title: "Rain Lofi", icon: "🌧", src: chrome.runtime.getURL("music/rain-lofi.mp3") },
 ];
 
-// ============================
+
 // Tabs Setup
-// ============================
+
 function setupTabs() {
   const tabButtons = document.querySelectorAll(".tab");
   const tabContents = document.querySelectorAll(".tab-content");
@@ -34,7 +30,7 @@ function setupTabs() {
       const content = document.getElementById(target);
       if (content) content.classList.add("active");
 
-      // Refresh analytics when AI tab is opened
+     
       if (target === "ai") {
         updateAnalytics();
       }
@@ -44,9 +40,9 @@ function setupTabs() {
   console.log("✅ Tabs initialized");
 }
 
-// ============================
-// Focus Controls (unchanged, re-used from your original code)
-// ============================
+
+// Focus Controls
+
 function initFocusControls() {
   const blockToggle = document.getElementById("blockToggle");
   const blockedListEl = document.getElementById("blockedList");
@@ -202,9 +198,9 @@ function renderStats(container) {
   });
 }
 
-// ============================
-// AI Analytics (unchanged code from your original)
-// ============================
+
+// AI Analytics 
+
 function initAnalytics() {
   updateAnalytics();
   setInterval(() => {
@@ -244,10 +240,6 @@ function updateAnalytics() {
     generateInsights(todayFocusMinutes, todayBlocks, trackingData, score);
   });
 }
-
-
-// (All the helper functions for analytics are unchanged - kept from your original popup-2.js)
-// For brevity they are included as-is below:
 
 function calculateProductivityScore(focusMinutes, blocksCount, trackingData) {
   const focusScore = Math.min(focusMinutes * 1.5, 60);
@@ -401,9 +393,8 @@ function generateInsights(focusMinutes, blocksCount, trackingData, score) {
   });
 }
 
-// ============================
-// 🎧 Music Player (Background Audio) - updated to support Play/Pause + custom songs
-// ============================
+// Music Player 
+
 function initMusicPlayer() {
   const trackGrid = document.getElementById("trackGrid");
   const currentTrackName = document.getElementById("currentTrackName");
@@ -420,7 +411,6 @@ function initMusicPlayer() {
   let currentIndex = 0;
   let userPlaylist = [];
 
-  // Load stored custom songs (stored as {title, icon, src} where src may be blob URL)
   chrome.storage.local.get(["customSongs", "musicVolume", "currentTrack", "musicPlaying"], (data) => {
     userPlaylist = data.customSongs || [];
     if (data.musicVolume !== undefined) {
@@ -431,7 +421,7 @@ function initMusicPlayer() {
     if (data.currentTrack !== undefined) currentIndex = data.currentTrack;
     isPlaying = !!data.musicPlaying;
     renderTrackGrid();
-    // if musicPlaying was true, we don't auto-start; user must click or resume
+ 
   });
 
   function getFullPlaylist() {
@@ -456,10 +446,10 @@ function initMusicPlayer() {
       const full = getFullPlaylist();
       const volume = volumeSlider.value / 100;
 
-      // Ensure offscreen document exists and is initialized
+     
       await chrome.runtime.sendMessage({ action: "audio:init", playlist: full, volume });
 
-      // Request play
+     
       const response = await chrome.runtime.sendMessage({ action: "audio:playTrack", index });
 
       if (response?.success) {
@@ -492,7 +482,7 @@ function initMusicPlayer() {
     }
   });
 
-  // Play / Pause - always init first to ensure offscreen exists
+  // Play / Pause
   playPauseBtn.addEventListener("click", async () => {
     try {
       const full = getFullPlaylist();
@@ -519,7 +509,7 @@ function initMusicPlayer() {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
-    // Create a blob URL to play the file. Note: blob URLs do not persist across extension reloads.
+  
     const blobUrl = URL.createObjectURL(file);
     const song = { title: file.name.replace(/\.[^/.]+$/, ""), icon: "🎶", src: blobUrl };
 
@@ -539,9 +529,9 @@ function initMusicPlayer() {
   console.log("✅ Music UI ready");
 }
 
-// ============================
+
 // Initialize on DOM Load
-// ============================
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Focus AI popup loaded successfully.");
 
